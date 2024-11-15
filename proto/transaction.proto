@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "proto";
+
+import "uint256.proto";
+import "google/protobuf/timestamp.proto";
+
+message Transaction {
+  string tx_id = 1;
+  string sender = 2;
+  string recipient = 3;
+  Uint256 amount = 4;
+  google.protobuf.Timestamp timestamp = 5;
+}
