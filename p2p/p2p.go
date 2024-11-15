@@ -13,6 +13,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"log"
 	"strings"
+	"transaction/config"
 )
 
 type NodePeer struct {
@@ -21,7 +22,7 @@ type NodePeer struct {
 	topics map[string]*pubsub.Topic
 }
 
-func NewPeer(addr string, port int, peerList []string) NodePeer {
+func NewPeer(addr string, port int, peers []config.Peer) NodePeer {
 	node, err := libp2p.New(libp2p.ListenAddrStrings(fmt.Sprintf("/ip4/%s/tcp/%d", addr, port)))
 
 	if err != nil {
@@ -29,8 +30,8 @@ func NewPeer(addr string, port int, peerList []string) NodePeer {
 		panic(err)
 	}
 
-	for _, peerToConnect := range peerList {
-		ConnectPeer(&node, peerToConnect, "")
+	for _, peerToConnect := range peers {
+		ConnectPeer(&node, peerToConnect)
 	}
 
 	node.Network().Notify(&network.NotifyBundle{
@@ -51,22 +52,16 @@ func NewPeer(addr string, port int, peerList []string) NodePeer {
 	return NodePeer{Node: node, PubSub: ps, topics: topics}
 }
 
-func ConnectPeer(node *host.Host, addr string, pid peer2.ID) {
-	splittedPeer := strings.Split(addr, ":")
-	pAddr := splittedPeer[0]
-	pPort := splittedPeer[1]
-	pfAddress := fmt.Sprintf("/ip4/%s/tcp/%s", pAddr, pPort)
+func ConnectPeer(node *host.Host, peer config.Peer) {
+
+	pfAddress := fmt.Sprintf("/ip4/%s/tcp/%s", peer.Addr, peer.Port)
 	pMultiAddr, pErr := multiaddr.NewMultiaddr(pfAddress)
 	if pErr != nil {
 		panic(pErr)
 	}
 
-	if pid == "" {
-		pid = "faked"
-	}
-
 	pInfo := peer2.AddrInfo{
-		ID:    pid,
+		ID:    peer.PeerId,
 		Addrs: []multiaddr.Multiaddr{pMultiAddr},
 	}
 
@@ -90,13 +85,17 @@ func ConnectPeer(node *host.Host, addr string, pid peer2.ID) {
 
 			log.Println(pInfo)
 
-			ConnectPeer(node, addr, actualPidBytes)
+			ConnectPeer(node, config.Peer{
+				Addr:   peer.Addr,
+				Port:   peer.Port,
+				PeerId: actualPidBytes,
+			})
 
 			return
 		}
 		panic(cErr)
 	} else {
-		log.Printf("connected to peer %s", addr)
+		log.Printf("connected to peer %s", peer.Addr)
 	}
 }
 
@@ -118,13 +117,21 @@ func DeserializeProtoMessage[T proto.Message](message []byte, result T) {
 }
 
 func (np *NodePeer) Publish(topic *pubsub.Topic, serializedMessage []byte) {
+	msg := compressData(serializedMessage)
+	msgSizeError := CheckMessageSize(msg)
+
+	if msgSizeError != nil {
+		log.Println(msgSizeError.Error())
+		return
+	}
+
 	publishError := topic.Publish(context.Background(), compressData(serializedMessage))
 
 	if publishError != nil {
-		log.Printf("Ошибка при публикации сообщения: %v", publishError)
+		log.Printf("error on publish message: %v", publishError)
 	}
 
-	log.Println("Publish message")
+	log.Printf("[%s] publish with size %d", topic.String(), len(msg))
 }
 
 func (np *NodePeer) Subscribe(topicName string, callback func(message []byte)) *pubsub.Topic {
