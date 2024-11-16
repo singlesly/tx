@@ -40,3 +40,11 @@ func (s *TransactionServiceServer) GetTransaction(ctx context.Context, req *prot
 		Transaction: transaction,
 	}, nil
 }
+
+func (s *TransactionServiceServer) GetTransactions(ctx context.Context, req *proto.GetTransactionsRequest) (*proto.GetTransactionsResponse, error) {
+	transactions, _ := dao.GetTransactions(s.Db)
+
+	return &proto.GetTransactionsResponse{
+		Transactions: transactions,
+	}, nil
+}

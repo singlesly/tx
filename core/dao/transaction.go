@@ -3,6 +3,7 @@ package dao
 import (
 	"errors"
 	"github.com/dgraph-io/badger"
+	proto2 "google.golang.org/protobuf/proto"
 	"transaction/p2p"
 	"transaction/proto"
 )
@@ -45,6 +46,40 @@ func GetTransaction(db *badger.DB, txId string) (*proto.Transaction, error) {
 	p2p.DeserializeProtoMessage(val, &txProto)
 
 	return &txProto, nil
+}
+
+func GetTransactions(db *badger.DB) ([]*proto.Transaction, error) {
+	result := make([]*proto.Transaction, 0)
+
+	err := db.View(func(txn *badger.Txn) error {
+		opts := badger.DefaultIteratorOptions
+		opts.Prefix = []byte(TransactionTablePrefix)
+		opts.PrefetchSize = 1000
+
+		it := txn.NewIterator(opts)
+		defer it.Close()
+
+		for it.Rewind(); it.Valid(); it.Next() {
+			err := it.Item().Value(func(val []byte) error {
+				var transaction proto.Transaction
+				proto2.Unmarshal(val, &transaction)
+				result = append(result, &transaction)
+
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, err
 }
 
 func ExistsTransaction(db *badger.DB, txId string) bool {

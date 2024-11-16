@@ -11,6 +11,7 @@ import "google/protobuf/empty.proto";
 service TransactionService {
   rpc CreateTransaction(CreateTransactionRequest) returns (google.protobuf.Empty) {}
   rpc GetTransaction(GetTransactionRequest) returns (GetTransactionResponse) {}
+  rpc GetTransactions(GetTransactionsRequest) returns (GetTransactionsResponse) {}
 }
 
 message GetTransactionRequest {
@@ -23,6 +24,14 @@ message GetTransactionResponse {
 
 message CreateTransactionRequest {
   Transaction transaction = 1;
+}
+
+message GetTransactionsRequest {
+
+}
+
+message GetTransactionsResponse {
+  repeated Transaction transactions = 1;
 }
 
 message Transaction {
