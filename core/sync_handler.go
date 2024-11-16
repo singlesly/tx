@@ -27,6 +27,12 @@ func NewSyncHandler(peer p2p.NodePeer, db *badger.DB) *SyncHandler {
 	})
 
 	peer.Subscribe(fmt.Sprintf("request-sync"), func(message []byte) {
+
+		if peer.Node.ID().String() == string(message) {
+			log.Printf("skip self sync %s", message)
+			return
+		}
+
 		go func() {
 			db.View(func(txn *badger.Txn) error {
 				opts := badger.DefaultIteratorOptions

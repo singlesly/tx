@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/libp2p/go-libp2p"
+	dht "github.com/libp2p/go-libp2p-kad-dht"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
@@ -18,6 +19,7 @@ import (
 
 type NodePeer struct {
 	Node   host.Host
+	Dht    *dht.IpfsDHT
 	PubSub *pubsub.PubSub
 	Topics map[string]*pubsub.Topic
 }
@@ -30,8 +32,10 @@ func NewPeer(addr string, port int, peers []config.Peer) NodePeer {
 		panic(err)
 	}
 
+	connectedPeers := make([]peer2.AddrInfo, 0)
+
 	for _, peerToConnect := range peers {
-		ConnectPeer(&node, peerToConnect)
+		connectedPeers = ConnectPeer(&node, peerToConnect)
 	}
 
 	node.Network().Notify(&network.NotifyBundle{
@@ -47,12 +51,29 @@ func NewPeer(addr string, port int, peers []config.Peer) NodePeer {
 		panic(psErr)
 	}
 
-	topics := make(map[string]*pubsub.Topic)
+	ipfsDht := initDht(node, connectedPeers)
 
-	return NodePeer{Node: node, PubSub: ps, Topics: topics}
+	return NodePeer{Node: node, Dht: ipfsDht, PubSub: ps, Topics: make(map[string]*pubsub.Topic)}
 }
 
-func ConnectPeer(node *host.Host, peer config.Peer) {
+func initDht(node host.Host, peers []peer2.AddrInfo) *dht.IpfsDHT {
+
+	ipfsDHT, err := dht.New(context.Background(), node, dht.Mode(dht.ModeServer))
+	if err != nil {
+		panic("cannot init dht")
+	}
+
+	bErr := ipfsDHT.Bootstrap(context.Background())
+	if bErr != nil {
+		panic("cannot bootstrap dht")
+	}
+
+	return ipfsDHT
+}
+
+func ConnectPeer(node *host.Host, peer config.Peer) []peer2.AddrInfo {
+
+	connectedPeers := make([]peer2.AddrInfo, 0)
 
 	pfAddress := fmt.Sprintf("/ip4/%s/tcp/%s", peer.Addr, peer.Port)
 	pMultiAddr, pErr := multiaddr.NewMultiaddr(pfAddress)
@@ -91,12 +112,16 @@ func ConnectPeer(node *host.Host, peer config.Peer) {
 				PeerId: actualPidBytes,
 			})
 
-			return
+			connectedPeers = append(connectedPeers, pInfo)
+
+			return connectedPeers
 		}
 		panic(cErr)
 	} else {
 		log.Printf("connected to peer %s", peer.Addr)
 	}
+
+	return connectedPeers
 }
 
 func SerializeProtoMessage[T proto.Message](message T) []byte {

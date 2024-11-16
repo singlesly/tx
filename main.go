@@ -2,15 +2,11 @@ package main
 
 import (
 	"github.com/dgraph-io/badger"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 	"log"
-	"net"
 	"transaction/api"
 	config2 "transaction/config"
 	"transaction/core"
 	"transaction/p2p"
-	"transaction/proto"
 )
 
 func main() {
@@ -24,28 +20,11 @@ func main() {
 
 	if err != nil {
 		log.Printf("cannot connect db")
+		panic(err)
 	}
 
-	core.NewTransactionHandler(host, db)
-	syncHandler := core.NewSyncHandler(host, db)
-	syncHandler.RequestSync()
-
-	go func() {
-		lis, _ := net.Listen("tcp", ":50501")
-		s := grpc.NewServer()
-		proto.RegisterTransactionServiceServer(s, &api.TransactionServiceServer{
-			Db:   db,
-			Peer: host,
-		})
-		reflection.Register(s)
-		log.Printf("listen 0.0.0.0:50501")
-
-		sErr := s.Serve(lis)
-		if sErr != nil {
-			log.Fatalf(sErr.Error())
-			return
-		}
-	}()
+	core.NewCore(host, db)
+	api.NewApi(host, db, config)
 
 	select {}
 }

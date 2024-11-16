@@ -14,16 +14,18 @@ type Peer struct {
 }
 
 type Config struct {
-	Addr    string
-	Port    int
-	Peers   []Peer
-	DataDir string
+	Addr     string
+	Port     int
+	GrpcPort int
+	Peers    []Peer
+	DataDir  string
 }
 
 func NewConfigFromCommandArgs() *Config {
 	// Определение флагов для addr, port и списка адресов
 	addr := flag.String("addr", "0.0.0.0", "Адрес сервера")
 	port := flag.Int("port", 0, "Порт сервера")
+	grpcPort := flag.Int("grpc-port", 50501, "GRPC API Порт")
 	peerList := flag.String("peers", "", "Список пиров в формате address:port, разделённый запятой")
 	dataDir := flag.String("data-dir", "./var/data", "Путь к базе данных")
 	// Разбор аргументов командной строки
@@ -32,6 +34,7 @@ func NewConfigFromCommandArgs() *Config {
 	// Печать значений аргументов
 	fmt.Printf("Адрес: %s\n", *addr)
 	fmt.Printf("Порт: %d\n", *port)
+	fmt.Printf("GRPC API Порт: %d\n", *grpcPort)
 	fmt.Printf("Список пиров: %s\n", strings.Split(*peerList, ","))
 	fmt.Printf("Путь к базе данных: %s\n", *dataDir)
 
@@ -55,9 +58,10 @@ func NewConfigFromCommandArgs() *Config {
 	}
 
 	return &Config{
-		Addr:    *addr,
-		Port:    *port,
-		Peers:   peers,
-		DataDir: *dataDir,
+		Addr:     *addr,
+		Port:     *port,
+		GrpcPort: *grpcPort,
+		Peers:    peers,
+		DataDir:  *dataDir,
 	}
 }

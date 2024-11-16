@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = ".;proto";
+
+import "google/protobuf/empty.proto";
+
+service DiscoveryService {
+  rpc GetPeers(google.protobuf.Empty) returns (GetPeersResponse) {}
+}
+
+message GetPeersResponse {
+  repeated Peer peers = 1;
+}
+
+message Peer {
+  string address = 1;
+  int32 port = 2;
+  string id = 3;
+}
