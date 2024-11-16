@@ -22,11 +22,11 @@ func main() {
 
 	db, err := badger.Open(badger.DefaultOptions(config.DataDir))
 
-	core.NewTransactionHandler(host, db)
-
 	if err != nil {
 		log.Printf("cannot connect db")
 	}
+
+	core.NewTransactionHandler(host, db)
 
 	go func() {
 		lis, _ := net.Listen("tcp", ":50501")

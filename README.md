@@ -18,6 +18,17 @@ Modern transaction management systems often face challenges related to processin
 - **Fund Issuance**: Flexible mechanisms for creating new assets.
 - **Commission Deduction**: Automated handling of transaction fees.
 
+## What Problems This Project Does Not Aim to Solve
+
+- **Consensus Between Nodes**: By default, it is assumed that all nodes are truthful. This project does not include mechanisms to ensure consensus.
+- **Blockchain Technology**: This is not a blockchain. There are no links to previous blocks or even blocks at all.
+
+## Purpose of the Service
+
+- If you need a reliable system for transaction management, the type of transactions created depends entirely on your requirements and the requests you send to the network. Think of it as a specialized database for managing transactions.
+- If you need a distributed, fault-tolerant transaction management mechanism that can undergo certification and licensing.
+
+
 ## Architecture
 
 - **P2P Network**: Nodes communicate directly, eliminating single points of failure.
