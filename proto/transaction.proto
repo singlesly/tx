@@ -2,16 +2,35 @@ syntax = "proto3";
 
 package proto;
 
-option go_package = "proto";
+option go_package = ".;proto";
 
 import "uint256.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+service TransactionService {
+  rpc CreateTransaction(CreateTransactionRequest) returns (google.protobuf.Empty) {}
+  rpc GetTransaction(GetTransactionRequest) returns (GetTransactionResponse) {}
+}
+
+message GetTransactionRequest {
+  string tx_id = 1;
+}
+
+message GetTransactionResponse {
+  Transaction transaction = 1;
+}
+
+message CreateTransactionRequest {
+  Transaction transaction = 1;
+}
 
 message Transaction {
   string tx_id = 1;
-  string ticker = 2;
+  string symbol = 2;
   string sender = 3;
   string recipient = 4;
   Uint256 amount = 5;
-  google.protobuf.Timestamp timestamp = 6;
+  repeated string tx_refs = 6;
+  google.protobuf.Timestamp timestamp = 7;
 }

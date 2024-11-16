@@ -14,9 +14,10 @@ type Peer struct {
 }
 
 type Config struct {
-	Addr  string
-	Port  int
-	Peers []Peer
+	Addr    string
+	Port    int
+	Peers   []Peer
+	DataDir string
 }
 
 func NewConfigFromCommandArgs() *Config {
@@ -24,6 +25,7 @@ func NewConfigFromCommandArgs() *Config {
 	addr := flag.String("addr", "0.0.0.0", "Адрес сервера")
 	port := flag.Int("port", 0, "Порт сервера")
 	peerList := flag.String("peers", "", "Список пиров в формате address:port, разделённый запятой")
+	dataDir := flag.String("data-dir", "./var/data", "Путь к базе данных")
 	// Разбор аргументов командной строки
 	flag.Parse()
 
@@ -31,6 +33,7 @@ func NewConfigFromCommandArgs() *Config {
 	fmt.Printf("Адрес: %s\n", *addr)
 	fmt.Printf("Порт: %d\n", *port)
 	fmt.Printf("Список пиров: %s\n", strings.Split(*peerList, ","))
+	fmt.Printf("Путь к базе данных: %s\n", *dataDir)
 
 	var peers []Peer
 
@@ -52,8 +55,9 @@ func NewConfigFromCommandArgs() *Config {
 	}
 
 	return &Config{
-		Addr:  *addr,
-		Port:  *port,
-		Peers: peers,
+		Addr:    *addr,
+		Port:    *port,
+		Peers:   peers,
+		DataDir: *dataDir,
 	}
 }

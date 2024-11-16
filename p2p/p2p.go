@@ -19,7 +19,7 @@ import (
 type NodePeer struct {
 	Node   host.Host
 	PubSub *pubsub.PubSub
-	topics map[string]*pubsub.Topic
+	Topics map[string]*pubsub.Topic
 }
 
 func NewPeer(addr string, port int, peers []config.Peer) NodePeer {
@@ -49,7 +49,7 @@ func NewPeer(addr string, port int, peers []config.Peer) NodePeer {
 
 	topics := make(map[string]*pubsub.Topic)
 
-	return NodePeer{Node: node, PubSub: ps, topics: topics}
+	return NodePeer{Node: node, PubSub: ps, Topics: topics}
 }
 
 func ConnectPeer(node *host.Host, peer config.Peer) {
@@ -136,6 +136,12 @@ func (np *NodePeer) Publish(topic *pubsub.Topic, serializedMessage []byte) {
 
 func (np *NodePeer) Subscribe(topicName string, callback func(message []byte)) *pubsub.Topic {
 	topic, joinErr := np.PubSub.Join(topicName)
+	(np.Topics)[topicName] = topic
+
+	log.Printf("subscribed " + topicName)
+
+	x, _ := (np.Topics)[topicName]
+	log.Printf(x.String())
 
 	if joinErr != nil {
 		panic(joinErr)
@@ -157,9 +163,9 @@ func (np *NodePeer) Subscribe(topicName string, callback func(message []byte)) *
 				continue
 			}
 
-			if msg.GetFrom().String() == np.Node.ID().String() {
-				continue
-			}
+			//if msg.GetFrom().String() == np.Node.ID().String() {
+			//	continue
+			//}
 
 			log.Printf("Incoming message from node: %s", msg.GetFrom().String())
 
