@@ -3,7 +3,6 @@ package dao
 import (
 	"errors"
 	"github.com/dgraph-io/badger"
-	proto2 "google.golang.org/protobuf/proto"
 	"transaction/p2p"
 	"transaction/proto"
 )
@@ -32,20 +31,10 @@ func GetTransaction(db *badger.DB, txId string) (*proto.Transaction, error) {
 	if err != nil {
 		return nil, err
 	}
-	var val []byte
-	err = item.Value(func(x []byte) error {
-		val = append([]byte{}, x...)
 
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
+	txProto := ItemToProtoTransaction(item)
 
-	var txProto proto.Transaction
-	p2p.DeserializeProtoMessage(val, &txProto)
-
-	return &txProto, nil
+	return txProto, nil
 }
 
 func GetTransactions(db *badger.DB) ([]*proto.Transaction, error) {
@@ -60,16 +49,7 @@ func GetTransactions(db *badger.DB) ([]*proto.Transaction, error) {
 		defer it.Close()
 
 		for it.Rewind(); it.Valid(); it.Next() {
-			err := it.Item().Value(func(val []byte) error {
-				var transaction proto.Transaction
-				proto2.Unmarshal(val, &transaction)
-				result = append(result, &transaction)
-
-				return nil
-			})
-			if err != nil {
-				return err
-			}
+			result = append(result, ItemToProtoTransaction(it.Item()))
 		}
 
 		return nil
@@ -102,4 +82,39 @@ func InsertTransaction(db *badger.DB, tx *proto.Transaction) {
 	if err != nil {
 		return
 	}
+}
+
+func GetLastNTransactions(db *badger.DB, count int) []*proto.Transaction {
+	result := make([]*proto.Transaction, 0)
+
+	_ = db.View(func(txn *badger.Txn) error {
+		opts := badger.DefaultIteratorOptions
+		opts.Reverse = true
+		opts.PrefetchSize = count
+		opts.Prefix = []byte(TransactionTablePrefix)
+
+		it := txn.NewIterator(opts)
+
+		for it.Rewind(); it.Valid(); it.Next() {
+			result = append(result, ItemToProtoTransaction(it.Item()))
+		}
+		return nil
+	})
+
+	return result
+}
+
+func ItemToProtoTransaction(item *badger.Item) *proto.Transaction {
+	var transaction proto.Transaction
+
+	err := item.Value(func(val []byte) error {
+		p2p.DeserializeProtoMessage(val, &transaction)
+
+		return nil
+	})
+	if err != nil {
+		return nil
+	}
+
+	return &transaction
 }

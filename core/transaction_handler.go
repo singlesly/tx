@@ -32,7 +32,7 @@ func NewTransactionHandler(peer p2p.NodePeer, db *badger.DB) *TransactionHandler
 func (h *TransactionHandler) handleNewTransaction(transaction *proto.Transaction) {
 
 	if dao.ExistsTransaction(h.Db, transaction.TxId) {
-		log.Printf("transaction %s skipped", transaction.TxId)
+		log.Printf("transaction %s skipped because already exists", transaction.TxId)
 	} else if len(transaction.TxRefs) == 0 && !dao.HasTransactions(h.Db) {
 		log.Printf("transaction %s applied", transaction.TxId)
 		dao.InsertTransaction(h.Db, transaction)
@@ -49,7 +49,9 @@ func (h *TransactionHandler) handleNewTransaction(transaction *proto.Transaction
 		dao.InsertTransaction(h.Db, transaction)
 
 		log.Printf("transaction %s applied", transaction.TxId)
+	} else if !dao.HasTransactions(h.Db) {
+		log.Printf("transaction %s skipped because empty database", transaction.TxId)
 	} else {
-		log.Printf("transaction %s skipped", transaction.TxId)
+		log.Fatalf("potential unreachable stmt")
 	}
 }

@@ -27,6 +27,8 @@ func main() {
 	}
 
 	core.NewTransactionHandler(host, db)
+	syncHandler := core.NewSyncHandler(host, db)
+	syncHandler.RequestSync()
 
 	go func() {
 		lis, _ := net.Listen("tcp", ":50501")
