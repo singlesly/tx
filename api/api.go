@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/dgraph-io/badger"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 	"log"
 	"net"
 	"transaction/config"
@@ -33,4 +34,8 @@ func registerServices(peer p2p.NodePeer, db *badger.DB, s *grpc.Server) {
 		Db:   db,
 		Peer: peer,
 	})
+	proto.RegisterDiscoveryServiceServer(s, &DiscoveryServiceServer{
+		Peer: peer,
+	})
+	reflection.Register(s)
 }

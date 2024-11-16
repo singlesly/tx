@@ -15,7 +15,6 @@ message GetPeersResponse {
 }
 
 message Peer {
-  string address = 1;
-  int32 port = 2;
+  repeated string addresses = 1;
   string id = 3;
 }
