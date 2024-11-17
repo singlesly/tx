@@ -8,6 +8,7 @@ import (
 )
 
 const TransactionTablePrefix = "transactions"
+const XorCheckSumKey = "xor:checksum:transactions"
 
 func GetTransactionKey(txId string) []byte {
 	return []byte(TransactionTablePrefix + ":" + txId)
